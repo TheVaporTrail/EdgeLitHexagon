@@ -87,7 +87,6 @@ uint32_t seqBooooo[] = { BLUE,     0,        0,        0,        0,        0    
 uint32_t seqooooBo[] = { 0,        0,        0,        0,        BLUE,     0        };
 uint32_t seqGoooBo[] = { GREEN,    0,        0,        0,        BLUE,     0        };
 
-
 //----------------------------------------------------------------------------------------
 //	Color sequence typedef
 //
@@ -201,6 +200,13 @@ ColorSequence_t csRGBandCMYSwing[] = {
 	{ seqCoMoYo, 6, TWO_LEDS,  6,  2, 3*SIDE_LEDS}
 	};
 
+ColorSequence_t csLotsOfFade[] = {
+	{ seqRRGGBB, 6, TWO_LEDS,  6,  1, 0},
+	{ seqCMYCMY, 6, TWO_LEDS,  6,  1, 0},
+	{ seqRYGCBM, 6, TWO_LEDS,  6,  1, 0},
+	{ seqRYGCBM, 6, TWO_LEDS,  6,  1, 0}
+	};
+
 //----------------------------------------------------------------------------------------
 //	Color Animations typedefs
 //----------------------------------------------------------------------------------------
@@ -228,10 +234,12 @@ uint16_t SwingColorsAnimation	(ColorAnimation_t* animation, uint16_t* pStep);
 //	Color Animations 
 //----------------------------------------------------------------------------------------
 ColorAnimation_t anFadeTriangle_BlueRed 	= { FadeTrianglesAnimation, _list_and_len_(csBluesReds), 1, 10, 4000 };
+ColorAnimation_t anFadeTriangle_RGBandCMY 	= { FadeTrianglesAnimation, _list_and_len_(csRGBandCMYSwing), 1, 10, 4000 };
+ColorAnimation_t anFadeTriangle_Lots	 	= { FadeTrianglesAnimation, _list_and_len_(csLotsOfFade), 1, 10, 4000 };
 ColorAnimation_t anRotate_RGBPairs 			= { RotateColorsAnimation, _list_and_len_(csRGBPairs), 1, 10, 0 };
 ColorAnimation_t anRotate_AllColors 		= { RotateColorsAnimation, _list_and_len_(csAllColors), 1, 100, 0 };
 ColorAnimation_t anRotate_RRGB 				= { RotateColorsAnimation, _list_and_len_(csSpinningRRGB), 1, 100, 0 };
-ColorAnimation_t anSwing_Yellow				= { SwingColorsAnimation, _list_and_len_(csYellowSwing), 1, 200, 0 };
+ColorAnimation_t anSwing_Yellow				= { SwingColorsAnimation, _list_and_len_(csYellowSwing), 1, 400, 0 };
 ColorAnimation_t anSwing_RedBlue			= { SwingColorsAnimation, _list_and_len_(csRedBlueSwing), 1, 200, 0 };
 ColorAnimation_t anSwing_BluesReds			= { SwingColorsAnimation, _list_and_len_(csBluesReds), 1, 300, 0 };
 ColorAnimation_t anSwing_RGBandCMY			= { SwingColorsAnimation, _list_and_len_(csRGBandCMYSwing), 1, 500, 0 };
@@ -244,11 +252,13 @@ ColorAnimation_t* AnimationList[] =
 		&anFadeTriangle_BlueRed,
 		&anSwing_Yellow,
 		&anRotate_RGBPairs,
+		&anFadeTriangle_Lots,
 		&anSwing_RGBandCMY,
 		&anRotate_AllColors,
 		&anSwing_RedBlue,
 		&anRotate_RRGB,
-		&anSwing_BluesReds
+		&anSwing_BluesReds,
+		&anFadeTriangle_RGBandCMY
 	};
 //----------------------------------------------------------------------------------------
 //	Setup
@@ -268,7 +278,7 @@ void loop()
 {
 	//TestAnimation();
 	
-	//RunAnimation(&anSwing_RGBandCMY);
+	//RunAnimation(&anFadeTriangle_Lots);
 	
 	RunAnimationList(_list_and_len_(AnimationList), 30 * 1000);
 }
