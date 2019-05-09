@@ -24,7 +24,7 @@ Adafruit_NeoPixel hexring = Adafruit_NeoPixel(LED_COUNT, PIN, NEO_GRB + NEO_KHZ8
 #define FIXEDPT_SHIFT 4
 #define FIXEDPT_MASK ((1 << FIXEDPT_SHIFT) - 1)
 
-void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, uint32_t fpColor, uint8_t op);
+void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, uint32_t fpColor, uint8_t op, uint32_t value = 0);
 
 // Some convenient constants
 #define ONE_LED		(1 << FIXEDPT_SHIFT)
@@ -42,8 +42,17 @@ void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, 
 #define OP_SET   0
 #define OP_BLEND 1
 #define OP_MAX   2
+#define OP_ADD   3
 
 void UpdateColor(Adafruit_NeoPixel& afnp, uint16_t index, uint32_t color, uint8_t op, uint32_t value = 0);
+
+//----------------------------------------------------------------------------------------
+//	These tables can be moved to "program memory" (PROGMEM), but it will require
+//	additional code to read the values.
+//
+//	https://www.arduino.cc/reference/en/language/variables/utilities/progmem/
+//
+//----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
 //	Colors
@@ -64,28 +73,45 @@ void UpdateColor(Adafruit_NeoPixel& afnp, uint16_t index, uint32_t color, uint8_
 uint32_t seqoooooo[] = { 0,        0,        0,        0,        0,        0        }; // All off
 uint32_t seqRRGGBB[] = { RED,      RED,      GREEN,    GREEN,    BLUE,     BLUE     }; // Pairs of red, green, blue
 uint32_t seqoRoGoB[] = { 0,        RED,      0,        GREEN,    0,        BLUE     }; // Spaced red, green, blue
+uint32_t seqRoGoBo[] = { RED,      0,        GREEN,    0,        BLUE,     0        };
+uint32_t seqGoBoRo[] = { GREEN,    0,        BLUE,     0,        RED,      0        };
+uint32_t seqBoRoGo[] = { BLUE,     0,        RED,      0,        GREEN,    0        };
 uint32_t seqRGRGRG[] = { RED,      GREEN,    RED,      GREEN,    RED,      GREEN    }; // Alternating red, green
+uint32_t seqGRGRGR[] = { GREEN,    RED,      GREEN,    RED,      GREEN,    RED      }; // Alternating green, red
 uint32_t seqCMYCMY[] = { CYAN,     MAGENTA,  YELLOW,   CYAN,     MAGENTA,  YELLOW   }; // Triplets of cyan, magenta, yellow
 uint32_t seqCoMoYo[] = { CYAN,     0,        MAGENTA,  0,        YELLOW,   0        }; // Spaced of cyan, magenta, yellow
 uint32_t seqRYGCBM[] = { RED,      YELLOW,   GREEN,    CYAN,     BLUE,     MAGENTA  }; // All six colors
 uint32_t seqRGBRGB[] = { RED,      GREEN,    BLUE,     RED,      GREEN,    BLUE,    };
-uint32_t seqRoGoBo[] = { RED,      0,        GREEN,    0,        BLUE,     0        };
 
 uint32_t seqRooRoo[] = { RED,      0,        0,        RED,      0,        0        };
 uint32_t seqRoRoRo[] = { RED,      0,        RED,      0,        RED,      0        };
+uint32_t seqRRRooo[] = { RED,      RED,      RED,      0,        0,        0        };
+uint32_t seqoRoRoR[] = { 0,        RED,      0,        RED,      0,        RED      };
 uint32_t seqRooooo[] = { RED,      0,        0,        0,        0,        0        };
 uint32_t seqGooooo[] = { GREEN,    0,        0,        0,        0,        0        };
+uint32_t seqGGGooo[] = { GREEN,    GREEN,    GREEN,    0,        0,        0        };
 uint32_t seqYooooo[] = { YELLOW,   0,        0,        0,        0,        0        };
+uint32_t seqYYYYYY[] = { YELLOW,   YELLOW,   YELLOW,   YELLOW,   YELLOW,   YELLOW   };
 uint32_t seqMooooo[] = { MAGENTA,  0,        0,        0,        0,        0        };
 uint32_t seqCooooo[] = { CYAN,     0,        0,        0,        0,        0        };
 uint32_t seqoGoooo[] = { 0,        GREEN,    0,        0,        0,        0        };
 uint32_t seqoGoGoG[] = { 0,        GREEN,    0,        GREEN,    0,        GREEN    };
+uint32_t seqGoGoGo[] = { GREEN,    0,        GREEN,    0,        GREEN,    0        };
 uint32_t seqoGooGo[] = { 0,        GREEN,    0,        0,        GREEN,    0        };
+uint32_t seqGooGoo[] = { GREEN,    0,        0,        GREEN,    0,        0        };
 uint32_t seqooBooB[] = { 0,        0,        BLUE,     0,        0,        BLUE     };
 uint32_t seqoBoBoB[] = { 0,        BLUE,     0,        BLUE,     0,        BLUE     };
+uint32_t seqBoBoBo[] = { BLUE,     0,        BLUE,     0,        BLUE,     0        };
 uint32_t seqBooooo[] = { BLUE,     0,        0,        0,        0,        0        };
+uint32_t seqBooBoo[] = { BLUE,     0,        0,        BLUE,     0,        0        };
 uint32_t seqooooBo[] = { 0,        0,        0,        0,        BLUE,     0        };
 uint32_t seqGoooBo[] = { GREEN,    0,        0,        0,        BLUE,     0        };
+uint32_t seqBBBRRR[] = { BLUE,     BLUE,     BLUE,     RED,      RED,      RED      };
+
+uint32_t seqRYGCBMRYGCBM[] = 	 { RED,      YELLOW,   GREEN,    CYAN,     BLUE,     MAGENTA,  RED,      YELLOW,   GREEN,    CYAN,     BLUE,     MAGENTA    }; // All six colors
+uint32_t seqRGBRGBRGBRGB[] = 	 { RED,      GREEN,    BLUE,     RED,      GREEN,    BLUE,     RED,      GREEN,    BLUE,     RED,      GREEN,    BLUE,     };
+uint32_t seqRGRGRBRBGBGB[] = 	 { RED,      GREEN,    RED,      GREEN,    RED,      BLUE,     RED,      BLUE,     GREEN,    BLUE,     GREEN,    BLUE,     };
+
 
 //----------------------------------------------------------------------------------------
 //	Color sequence typedef
@@ -102,12 +128,11 @@ typedef struct {
 	uint8_t   colorBrightness;
 	
 	int8_t    miscA;
-	uint16_t   miscB;
+	uint16_t  miscB;
 } ColorSequence_t;
 
 #define CNT(__a__) (sizeof(__a__)/sizeof(*(__a__)))
 
-#define SEQ_LEN(__seq__) __seq__, CNT(__seq__)
 #define _list_and_len_(__array__) __array__, CNT(__array__)
 
 //----------------------------------------------------------------------------------------
@@ -118,8 +143,17 @@ ColorSequence_t csRGBPairs[] = {
 	{ seqRRGGBB, 6, FOUR_LEDS, 4,  1, 0}  // RRGGBB >
 };
 
+ColorSequence_t csBBBRRR[] = {
+	{ seqBBBRRR, 6, SIDE_LEDS - ONE_LED, 4,  1, 0}
+};
+
 ColorSequence_t csAllColors[] = {
 	{ seqRYGCBM, 6, HALF_LEDS, 4,  1, 0}  // RYGCBM >
+};
+
+ColorSequence_t csSwingAll[] = {
+	{ seqRYGCBM, 6, TWO_LEDS, 8,  1, SIDE_LEDS},  // RYGCBM >
+	{ seqRYGCBM, 6, TWO_LEDS, 8, -1, SIDE_LEDS}   // RYGCBM <
 };
 
 ColorSequence_t csSpinningRRGB[] = {
@@ -166,9 +200,11 @@ ColorSequence_t cs08[] = {
 	{ seqRoRoRo, 6, SIDE_LEDS, 6,  1, 0}  // RoRoRo >
 	};
 
-ColorSequence_t cs09[] = {
-	{ seqoGoGoG, 6, HALF_LEDS, 6, -1, 0}, // oGoGoG <
-	{ seqRoRoRo, 6, HALF_LEDS, 6,  1, 0}  // RoRoRo >
+ColorSequence_t csFade_RGY[] = {
+	{ seqRGRGRG, 6, HALF_LEDS, 6,  1, 0},
+	{ seqYYYYYY, 6, HALF_LEDS, 6,  1, 0},
+	{ seqGRGRGR, 6, HALF_LEDS, 6,  1, 0},
+	{ seqYYYYYY, 6, HALF_LEDS, 6,  1, 0}
 	};
 
 ColorSequence_t cs10[] = {
@@ -180,19 +216,50 @@ ColorSequence_t csBluesReds[] = {
 	{ seqRoRoRo, 6, HALF_LEDS, 6,  1, 3*SIDE_LEDS}  // RoRoRo >
 	};
 
-ColorSequence_t cs12[] = {
-	{ seqYooooo, 6, HALF_LEDS, 6,  1, 0}, // Yooooo >
-	{ seqMooooo, 6, HALF_LEDS, 6,  2, 0}, // Mooooo >>
-	{ seqCooooo, 6, HALF_LEDS, 6,  3, 0}  // Cooooo >>>
+ColorSequence_t csFade_Trios[] = {
+	{ seqRoRoRo, 6, HALF_LEDS, 6,  1, 0}, // RoRoRo 
+	{ seqoGoGoG, 6, HALF_LEDS, 6,  1, 0}, // oGoGoG 
+	{ seqBoBoBo, 6, HALF_LEDS, 6,  1, 0}, // BoBoBo 
+	{ seqoRoRoR, 6, HALF_LEDS, 6,  1, 0}, // oRoRoR
+	{ seqGoGoGo, 6, HALF_LEDS, 6,  1, 0}, // GoGoGo
+	{ seqoBoBoB, 6, HALF_LEDS, 6,  1, 0}  // oBoBoB
+	};
+
+ColorSequence_t csSwingYMC[] = {
+	{ seqYooooo, 6, SIDE_LEDS, 6,  1, 2*ALL_LEDS/2}, // Yooooo >
+	{ seqMooooo, 6, SIDE_LEDS, 6,  2, 2*ALL_LEDS/2}, // Mooooo >>
+	{ seqCooooo, 6, SIDE_LEDS, 6,  3, 2*ALL_LEDS/2}  // Cooooo >>>
 	};
 
 ColorSequence_t csYellowSwing[] = {
-	{ seqYooooo, 1, FOUR_LEDS,  6,  1, (2*ALL_LEDS)}  // Yooooo  
+	{ seqYooooo, 1, FOUR_LEDS,  6,  1, (2*ALL_LEDS)}
 	};
 
+ColorSequence_t csTwelveRGBSwing[] = {
+	{ seqRGBRGBRGBRGB, 12, HALF_LEDS,  6,  1, (3*SIDE_LEDS)}
+	};
+	
+ColorSequence_t csTwelveRGBSwing2[] = {
+	{ seqRGRGRBRBGBGB, 12, HALF_LEDS,  6,  1, ALL_LEDS}
+	};
+	
+ColorSequence_t csTwelveRYGCBMSwing[] = {
+	{ seqRYGCBMRYGCBM, 12, HALF_LEDS - ONE_LED,  6,  1, (3*SIDE_LEDS)}
+	};
+	
 ColorSequence_t csRedBlueSwing[] = {
 	{ seqRooooo, 1, SIDE_LEDS,  6,  1, ALL_LEDS},
 	{ seqBooooo, 1, SIDE_LEDS,  6, -1, ALL_LEDS}
+	};
+
+ColorSequence_t csGreenBlueSwing[] = {
+	{ seqGooGoo, 6, SIDE_LEDS,  6,  1, 2*ALL_LEDS},
+	{ seqBooBoo, 6, SIDE_LEDS,  6, -1, 2*ALL_LEDS}
+	};
+
+ColorSequence_t csHalfGreenRed[] = {
+	{ seqGGGooo, 6, SIDE_LEDS,  4,  1, 4*SIDE_LEDS},
+	{ seqRRRooo, 6, SIDE_LEDS,  4, -1, 4*SIDE_LEDS}
 	};
 
 ColorSequence_t csRGBandCMYSwing[] = {
@@ -200,6 +267,23 @@ ColorSequence_t csRGBandCMYSwing[] = {
 	{ seqCoMoYo, 6, TWO_LEDS,  6,  2, 3*SIDE_LEDS}
 	};
 
+ColorSequence_t csRGBSwing[] = {
+	{ seqoRoGoB, 6, TWO_LEDS,  8,  1, SIDE_LEDS},
+	{ seqRoGoBo, 6, TWO_LEDS,  8, -1, SIDE_LEDS}
+	};
+
+ColorSequence_t csRGBSwingDouble[] = {
+	{ seqRoGoBo, 6, THREE_LEDS,  5,  1, 2*SIDE_LEDS},
+	{ seqRoGoBo, 6, THREE_LEDS,  5,  2, 2*SIDE_LEDS},
+	{ seqRoGoBo, 6, THREE_LEDS,  5,  3, 2*SIDE_LEDS}
+	};
+
+ColorSequence_t csRGBSwingAgain[] = {
+	{ seqRoGoBo, 6, FOUR_LEDS,  8,  1, 2*SIDE_LEDS},
+	{ seqGoBoRo, 6, FOUR_LEDS,  8,  2, 2*SIDE_LEDS},
+	{ seqBoRoGo, 6, FOUR_LEDS,  8,  3, 2*SIDE_LEDS}
+	};
+	
 ColorSequence_t csLotsOfFade[] = {
 	{ seqRRGGBB, 6, TWO_LEDS,  6,  1, 0},
 	{ seqCMYCMY, 6, TWO_LEDS,  6,  1, 0},
@@ -229,37 +313,72 @@ typedef struct ColorAnimation_tag
 uint16_t FadeTrianglesAnimation	(ColorAnimation_t* animation, uint16_t* pStep);
 uint16_t RotateColorsAnimation	(ColorAnimation_t* animation, uint16_t* pStep);
 uint16_t SwingColorsAnimation	(ColorAnimation_t* animation, uint16_t* pStep);
+uint16_t WipeColorsAnimation	(ColorAnimation_t* animation, uint16_t* pStep);
+uint16_t FlickerColorsAnimation	(ColorAnimation_t* animation, uint16_t* pStep);
 
 //----------------------------------------------------------------------------------------
 //	Color Animations 
 //----------------------------------------------------------------------------------------
-ColorAnimation_t anFadeTriangle_BlueRed 	= { FadeTrianglesAnimation, _list_and_len_(csBluesReds), 1, 10, 4000 };
-ColorAnimation_t anFadeTriangle_RGBandCMY 	= { FadeTrianglesAnimation, _list_and_len_(csRGBandCMYSwing), 1, 10, 4000 };
-ColorAnimation_t anFadeTriangle_Lots	 	= { FadeTrianglesAnimation, _list_and_len_(csLotsOfFade), 1, 10, 4000 };
-ColorAnimation_t anRotate_RGBPairs 			= { RotateColorsAnimation, _list_and_len_(csRGBPairs), 1, 10, 0 };
-ColorAnimation_t anRotate_AllColors 		= { RotateColorsAnimation, _list_and_len_(csAllColors), 1, 100, 0 };
-ColorAnimation_t anRotate_RRGB 				= { RotateColorsAnimation, _list_and_len_(csSpinningRRGB), 1, 100, 0 };
-ColorAnimation_t anSwing_Yellow				= { SwingColorsAnimation, _list_and_len_(csYellowSwing), 1, 400, 0 };
-ColorAnimation_t anSwing_RedBlue			= { SwingColorsAnimation, _list_and_len_(csRedBlueSwing), 1, 200, 0 };
-ColorAnimation_t anSwing_BluesReds			= { SwingColorsAnimation, _list_and_len_(csBluesReds), 1, 300, 0 };
-ColorAnimation_t anSwing_RGBandCMY			= { SwingColorsAnimation, _list_and_len_(csRGBandCMYSwing), 1, 500, 0 };
+const ColorAnimation_t anFade_BlueRed 			= { FadeTrianglesAnimation, _list_and_len_(csBluesReds), 1, 10, 4000 };
+const ColorAnimation_t anFade_RGBandCMY 		= { FadeTrianglesAnimation, _list_and_len_(csRGBandCMYSwing), 1, 10, 4000 };
+const ColorAnimation_t anFade_Lots	 			= { FadeTrianglesAnimation, _list_and_len_(csLotsOfFade), 1, 10, 4000 };
+const ColorAnimation_t anFade_Trios	 			= { FadeTrianglesAnimation, _list_and_len_(csFade_Trios), 1, 10, 4000 };
+const ColorAnimation_t anFade_RedGreenYellow	= { FadeTrianglesAnimation, _list_and_len_(csFade_RGY), 1, 10, 2000 };
+const ColorAnimation_t anRotate_RGBPairs 		= { RotateColorsAnimation,  _list_and_len_(csRGBPairs), 1, 10, 0 };
+const ColorAnimation_t anRotate_AllColors 		= { RotateColorsAnimation,  _list_and_len_(csAllColors), 1, 100, 0 };
+const ColorAnimation_t anRotate_RRGB 			= { RotateColorsAnimation,  _list_and_len_(csSpinningRRGB), 1, 100, 0 };
+const ColorAnimation_t anRotate_RG 				= { RotateColorsAnimation,  _list_and_len_(csSpinningRG), 1, 200, 0 };
+const ColorAnimation_t anRotate_BBBRRR			= { RotateColorsAnimation,  _list_and_len_(csBBBRRR), 1, 150, 0 };
+const ColorAnimation_t anRotate_RedInGreen		= { RotateColorsAnimation,  _list_and_len_(csGreenSpinningRed), 1, 200, 0 };
+const ColorAnimation_t anSwing_Yellow			= { SwingColorsAnimation,   _list_and_len_(csYellowSwing), 1, 400, 0 };
+const ColorAnimation_t anSwing_RedBlue			= { SwingColorsAnimation,   _list_and_len_(csRedBlueSwing), 1, 200, 0 };
+const ColorAnimation_t anSwing_BluesReds		= { SwingColorsAnimation,   _list_and_len_(csBluesReds), 1, 300, 0 };
+const ColorAnimation_t anSwing_RGBandCMY		= { SwingColorsAnimation,   _list_and_len_(csRGBandCMYSwing), 1, 500, 0 };
+const ColorAnimation_t anSwing_TwelveRGB		= { SwingColorsAnimation,   _list_and_len_(csTwelveRGBSwing), 1, 500, 0 };
+const ColorAnimation_t anSwing_TwelveRGB2		= { SwingColorsAnimation,   _list_and_len_(csTwelveRGBSwing2), 1, 600, 0 };
+const ColorAnimation_t anSwing_TwelveRYGCBM		= { SwingColorsAnimation,   _list_and_len_(csTwelveRYGCBMSwing), 1, 500, 0 };
+const ColorAnimation_t anSwing_GreenBlue		= { SwingColorsAnimation,   _list_and_len_(csGreenBlueSwing), 1, 600, 0 };
+const ColorAnimation_t anSwing_YMC				= { SwingColorsAnimation,   _list_and_len_(csSwingYMC), 1, 900, 0 };
+const ColorAnimation_t anSwing_RGB				= { SwingColorsAnimation,   _list_and_len_(csRGBSwing), 1, 400, 0 };
+const ColorAnimation_t anSwing_All				= { SwingColorsAnimation,   _list_and_len_(csSwingAll), 1, 300, 0 };
+const ColorAnimation_t anSwing_HalfGreenRed		= { SwingColorsAnimation,   _list_and_len_(csHalfGreenRed), 1, 600, 0 };
+const ColorAnimation_t anSwing_RGBDouble		= { SwingColorsAnimation,   _list_and_len_(csRGBSwingDouble), 1, 900, 0 };
+const ColorAnimation_t anSwing_RGBAgain			= { SwingColorsAnimation,   _list_and_len_(csRGBSwingAgain), 1, 900, 0 };
+const ColorAnimation_t anWipe_AllColors			= { WipeColorsAnimation,    _list_and_len_(csAllColors), 1, 900, 0 };
+const ColorAnimation_t anFlicker_AllColors		= { FlickerColorsAnimation, _list_and_len_(csHalfGreenRed), 1, 1800, 0 };
 
 //----------------------------------------------------------------------------------------
 //	Animation List
 //----------------------------------------------------------------------------------------
-ColorAnimation_t* AnimationList[] = 
+const ColorAnimation_t* AnimationList[] = 
 	{
-		&anFadeTriangle_BlueRed,
+		&anRotate_BBBRRR,
+		&anSwing_All,
+		&anSwing_RGB,
+		&anSwing_TwelveRYGCBM,
+		&anSwing_YMC,
+		&anSwing_GreenBlue,
+		&anSwing_TwelveRGB,		
+		&anFade_Trios,
+		&anRotate_RG,
+		&anSwing_TwelveRGB2,
+		&anFade_BlueRed,
 		&anSwing_Yellow,
 		&anRotate_RGBPairs,
-		&anFadeTriangle_Lots,
+		&anFade_RedGreenYellow,
+		&anRotate_RedInGreen,
+		&anSwing_RGBDouble,
+		&anFade_Lots,
 		&anSwing_RGBandCMY,
+		&anSwing_HalfGreenRed,
 		&anRotate_AllColors,
 		&anSwing_RedBlue,
 		&anRotate_RRGB,
+		&anSwing_RGBAgain,
 		&anSwing_BluesReds,
-		&anFadeTriangle_RGBandCMY
+		&anFade_RGBandCMY
 	};
+	
 //----------------------------------------------------------------------------------------
 //	Setup
 //----------------------------------------------------------------------------------------
@@ -276,11 +395,12 @@ void setup()
 //----------------------------------------------------------------------------------------
 void loop()
 {
-	//TestAnimation();
-	
-	//RunAnimation(&anFadeTriangle_Lots);
-	
-	RunAnimationList(_list_and_len_(AnimationList), 30 * 1000);
+	#if 1
+		RunAnimationList(_list_and_len_(AnimationList), 30 * 1000);
+	#else
+		//RunAnimation(&anWipe_RGBAgain);
+		//RunAnimation(&anFlicker_AllColors);
+	#endif
 }
 
 
@@ -288,7 +408,7 @@ void loop()
 //	Run Animation List
 //		
 //----------------------------------------------------------------------------------------
-void RunAnimationList(ColorAnimation_t** animations, uint16_t animationCount, uint32_t runTimeEach)
+static void RunAnimationList(ColorAnimation_t** animations, uint16_t animationCount, uint32_t runTimeEach)
 {
 	uint16_t animationIdx = 0;
 
@@ -306,7 +426,7 @@ void RunAnimationList(ColorAnimation_t** animations, uint16_t animationCount, ui
 //	Run Animation
 //		Run the animation
 //----------------------------------------------------------------------------------------
-void RunAnimation(ColorAnimation_t* animation)
+static void RunAnimation(ColorAnimation_t* animation)
 {
 	uint16_t delayTime;
 	uint16_t step = 0;
@@ -321,7 +441,7 @@ void RunAnimation(ColorAnimation_t* animation)
 //	Run Animation For
 //		Run the animation for at least the given number of milliseconds
 //----------------------------------------------------------------------------------------
-void RunAnimationFor(ColorAnimation_t* animation, uint32_t runForTime)
+static void RunAnimationFor(ColorAnimation_t* animation, uint32_t runForTime)
 {
 	uint32_t runTime = 0;
 	uint16_t delayTime;
@@ -340,7 +460,7 @@ void RunAnimationFor(ColorAnimation_t* animation, uint32_t runForTime)
 //----------------------------------------------------------------------------------------
 //	Individual tests
 //----------------------------------------------------------------------------------------
-void TestAnimation(void)
+static void TestAnimation(void)
 {
 	
 	//RotateColors(seqRYGCBM, 6, TWO_LEDS, 300);
@@ -382,7 +502,8 @@ void TestAnimation(void)
 //----------------------------------------------------------------------------------------
 //	Log Config
 //----------------------------------------------------------------------------------------
-void LogConfig(void)
+#if 0
+static void LogConfig(void)
 {
 	Serial.println("hexframe configuration");
 	Serial.print("  LED_COUNT: ");
@@ -392,8 +513,7 @@ void LogConfig(void)
 	Serial.print("  FIXEDPT_MASK: ");
 	Serial.println(FIXEDPT_MASK);
 }
-
-
+#endif
 
 //========================================================================================
 //	Color Animation Functionc
@@ -441,6 +561,83 @@ uint16_t FadeTrianglesAnimation(ColorAnimation_t* animation, uint16_t* pStep)
 	*pStep = (step + 1) % maxStep;
 	
 	return delayTime;
+}
+
+//----------------------------------------------------------------------------------------
+//	Wipe Colors
+//		
+//		
+//----------------------------------------------------------------------------------------
+
+uint16_t WipeColorsAnimation(ColorAnimation_t* animation, uint16_t* pStep)
+{
+	uint16_t maxStep = (LEDS_PER_SIDE << FIXEDPT_SHIFT)/2;
+	uint16_t step = *pStep;
+	
+	hexring.clear();
+	
+	for (uint8_t seqIdx = 0; seqIdx < animation->colorSequenceCount; seqIdx++)
+	{
+		ColorSequence_t* seq = animation->colorSequence + seqIdx;
+		uint8_t spacing = (LED_COUNT << FIXEDPT_SHIFT)/seq->colorCount;
+		
+		uint16_t base, offset;
+			
+		for (uint8_t colorIdx = 0; colorIdx < seq->colorCount; colorIdx++)
+		{
+			uint32_t color = seq->colorList[colorIdx] * seq->colorBrightness;
+			
+			base = step;
+			offset = (base + colorIdx * spacing) % (LED_COUNT << FIXEDPT_SHIFT);
+			SetFractPixel(hexring, offset, (ONE_LED), color, OP_MAX);
+			
+			base =  (SIDE_LEDS - ONE_LED) - base - 1;
+			offset = (base + colorIdx * spacing) % (LED_COUNT << FIXEDPT_SHIFT);
+			SetFractPixel(hexring, offset, (ONE_LED), color, OP_ADD);
+		}
+	}
+	
+	hexring.show();
+	
+	*pStep = (step + 1) % maxStep;
+	
+	return (animation->delayTime >> FIXEDPT_SHIFT);
+}
+
+uint16_t FlickerColorsAnimation(ColorAnimation_t* animation, uint16_t* pStep)
+{
+	uint16_t maxStep = (LEDS_PER_SIDE << FIXEDPT_SHIFT);
+	uint16_t step = *pStep;
+	
+	hexring.clear();
+	
+	for (uint8_t seqIdx = 0; seqIdx < animation->colorSequenceCount; seqIdx++)
+	{
+		ColorSequence_t* seq = animation->colorSequence + seqIdx;
+		uint8_t spacing = (LED_COUNT << FIXEDPT_SHIFT)/seq->colorCount;
+		
+		uint16_t offset;
+			
+		for (uint8_t colorIdx = 0; colorIdx < seq->colorCount; colorIdx++)
+		{
+		
+			uint32_t color = seq->colorList[colorIdx] * seq->colorBrightness;
+			uint32_t alpha;
+			
+			for (uint8_t i = 0; i < LEDS_PER_SIDE; i++)
+			{
+				offset = ( colorIdx * spacing + (i << FIXEDPT_SHIFT)) % (LED_COUNT << FIXEDPT_SHIFT);
+				alpha = random(0x80, 0xff);
+				SetFractPixel(hexring, offset, (ONE_LED), color, OP_BLEND, alpha);
+			}
+		}
+	}
+	
+	hexring.show();
+	
+	*pStep = (step + 1) % maxStep;
+	
+	return (animation->delayTime >> FIXEDPT_SHIFT);
 }
 
 //----------------------------------------------------------------------------------------
@@ -519,7 +716,7 @@ uint16_t SwingColorsAnimation(ColorAnimation_t* animation, uint16_t* pStep)
 		{
 			uint16_t offset = (base + colorIdx * spacing) % (LED_COUNT << FIXEDPT_SHIFT);
 			uint32_t color = seq->colorList[colorIdx] * seq->colorBrightness;
-			SetFractPixel(hexring, offset, seq->colorWidth, color, OP_MAX);
+			SetFractPixel(hexring, offset, seq->colorWidth, color, OP_ADD);
 		}
 	}
 	hexring.show();
@@ -536,12 +733,13 @@ uint16_t SwingColorsAnimation(ColorAnimation_t* animation, uint16_t* pStep)
 //	Color Animations
 //========================================================================================
 
+#if 0
 //----------------------------------------------------------------------------------------
 //	Fade Triangle Sequences
 //		Sets the colors of each side for a few seconds, blanks, 
 //		continues with the next color sequence
 //----------------------------------------------------------------------------------------
-void FadeTriangleSequences(uint32_t** sequencesList, uint8_t sequencesCount, uint16_t fadeDelay, uint16_t holdDelay)
+static void FadeTriangleSequences(uint32_t** sequencesList, uint8_t sequencesCount, uint16_t fadeDelay, uint16_t holdDelay)
 {
 	for (int i = 0; i < sequencesCount; i++)
 	{
@@ -556,7 +754,7 @@ void FadeTriangleSequences(uint32_t** sequencesList, uint8_t sequencesCount, uin
 //----------------------------------------------------------------------------------------
 //	Rotate Colors
 //----------------------------------------------------------------------------------------
-void RotateColors(uint32_t* colorList, uint8_t colorCount, uint8_t colorWidth, uint16_t delayTime)
+static void RotateColors(uint32_t* colorList, uint8_t colorCount, uint8_t colorWidth, uint16_t delayTime)
 {
 	uint8_t spacing = (LED_COUNT << FIXEDPT_SHIFT)/colorCount;
 	
@@ -578,7 +776,7 @@ void RotateColors(uint32_t* colorList, uint8_t colorCount, uint8_t colorWidth, u
 //----------------------------------------------------------------------------------------
 //	Dual Rotate Colors
 //----------------------------------------------------------------------------------------
-void DualRotateColors(uint32_t* colorListA, uint8_t colorCountA, uint32_t* colorListB, uint8_t colorCountB, uint8_t colorWidth, uint16_t delayTime)
+static void DualRotateColors(uint32_t* colorListA, uint8_t colorCountA, uint32_t* colorListB, uint8_t colorCountB, uint8_t colorWidth, uint16_t delayTime)
 {
 	uint8_t spacingA = (LED_COUNT << FIXEDPT_SHIFT)/colorCountA;
 	uint8_t spacingB = (LED_COUNT << FIXEDPT_SHIFT)/colorCountB;
@@ -608,7 +806,7 @@ void DualRotateColors(uint32_t* colorListA, uint8_t colorCountA, uint32_t* color
 //	Multi-Rotate Colors
 //		Rotate at various speeds and overlay multiple lists of colors
 //----------------------------------------------------------------------------------------
-void MultiRotateColors(ColorSequence_t* sequenceList, uint8_t sequenceCount, uint16_t delayTime)
+static void MultiRotateColors(ColorSequence_t* sequenceList, uint8_t sequenceCount, uint16_t delayTime)
 {
 	for (uint16_t step = 0; step < (LED_COUNT << FIXEDPT_SHIFT); step++)
 	{
@@ -642,7 +840,7 @@ void MultiRotateColors(ColorSequence_t* sequenceList, uint8_t sequenceCount, uin
 //	BackAndForth
 //		Use a sine function to move the LEDs back and forth
 //----------------------------------------------------------------------------------------
-void BackAndForth(uint32_t* colorList, uint8_t colorCount, uint8_t colorWidth, uint16_t colorSweep, uint16_t delayTime)
+static void BackAndForth(uint32_t* colorList, uint8_t colorCount, uint8_t colorWidth, uint16_t colorSweep, uint16_t delayTime)
 {
 	uint8_t spacing = (LED_COUNT << FIXEDPT_SHIFT)/colorCount;
 	
@@ -676,7 +874,7 @@ void BackAndForth(uint32_t* colorList, uint8_t colorCount, uint8_t colorWidth, u
 //		Sets each triangle to a color
 //		colors: list of 6 colors
 //----------------------------------------------------------------------------------------
-void FadeTriangleColors(uint32_t* colorsA, uint32_t* colorsB, uint16_t delayTime)
+static void FadeTriangleColors(uint32_t* colorsA, uint32_t* colorsB, uint16_t delayTime)
 {
 	for (uint16_t alpha = 0; alpha <= 255; alpha++)
 	{
@@ -693,12 +891,13 @@ void FadeTriangleColors(uint32_t* colorsA, uint32_t* colorsB, uint16_t delayTime
 	}
 }
 
+#endif
 
 //========================================================================================
 //	HexRing Utilities
 //		These routines are aware of the geometry of the LEDs
 //========================================================================================
-
+#if 0
 //----------------------------------------------------------------------------------------
 //	All Off
 //----------------------------------------------------------------------------------------
@@ -722,6 +921,8 @@ void SetTriangleColors(uint32_t* colors)
 		
 	hexring.show();
 }
+
+#endif
 
 //----------------------------------------------------------------------------------------
 //	Side Colors
@@ -747,7 +948,7 @@ void UpdateSideColor(uint8_t sideIdx, uint32_t color, uint8_t op)
 //	+----+----+----+----+
 //	        ^^^^^^^^^^^   fpWidth
 //----------------------------------------------------------------------------------------
-void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, uint32_t fpColor, uint8_t op)
+static void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, uint32_t fpColor, uint8_t op, uint32_t value = 0)
 {
 	int16_t width;
 	uint32_t color;
@@ -768,7 +969,7 @@ void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, 
 	color = ScaleColor(fpColor, width, (1 << FIXEDPT_SHIFT));
 
 	// Update the NeoPixel structure
-	UpdateColor(afnp, idx, color, op);
+	UpdateColor(afnp, idx, color, op, value);
 
 	// Calc the remaining width to be used over subsequent pixels
 	width = fpWidth - width;
@@ -787,7 +988,7 @@ void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, 
 		idx = (idx + 1) % LED_COUNT;
 		
 		// Update the NeoPixel 
-		UpdateColor(afnp, idx, color, op);
+		UpdateColor(afnp, idx, color, op, value);
 	
 		// Remove the width of an entire LED.
 		width -= (1 << FIXEDPT_SHIFT);
@@ -804,7 +1005,7 @@ void SetFractPixel(Adafruit_NeoPixel& afnp, uint16_t fpOffset, uint8_t fpWidth, 
 //		OP_BLEND
 //		OP_MAX
 //----------------------------------------------------------------------------------------
-void UpdateColor(Adafruit_NeoPixel& afnp, uint16_t index, uint32_t color, uint8_t op, uint32_t value = 0)
+static void UpdateColor(Adafruit_NeoPixel& afnp, uint16_t index, uint32_t color, uint8_t op, uint32_t value = 0)
 {
 	if (op == OP_SET)
 	{
@@ -820,6 +1021,11 @@ void UpdateColor(Adafruit_NeoPixel& afnp, uint16_t index, uint32_t color, uint8_
 		uint32_t colorB = afnp.getPixelColor(index);
 		color = CalcMaxColor(color, colorB);
 	}
+	else if (op == OP_ADD)
+	{
+		uint32_t colorB = afnp.getPixelColor(index);
+		color = CalcAddColor(color, colorB);
+	}
 
 	afnp.setPixelColor(index, color);
 }
@@ -832,7 +1038,7 @@ void UpdateColor(Adafruit_NeoPixel& afnp, uint16_t index, uint32_t color, uint8_
 //	Scale Color
 //		Scale each color channel by num/den
 //----------------------------------------------------------------------------------------
-uint32_t ScaleColor(uint32_t color, uint32_t num, uint32_t den)
+static uint32_t ScaleColor(uint32_t color, uint32_t num, uint32_t den)
 {
 	if (num != den)
 	{
@@ -854,25 +1060,50 @@ uint32_t ScaleColor(uint32_t color, uint32_t num, uint32_t den)
 //	Calc Max Color
 //		Take the maximum value from each channel
 //----------------------------------------------------------------------------------------
-uint32_t CalcMaxColor(uint32_t colorA, uint32_t colorB)
+static uint32_t CalcMaxColor(uint32_t colorA, uint32_t colorB)
 {
 	uint32_t color;
 	uint32_t ca, cb;
-	uint32_t r, g, b;
+	uint32_t c;
 	
-	ca = (colorA & 0xff0000);
-	cb = (colorB & 0xff0000);
-	r  = (ca > cb) ? ca : cb;
+	ca = (colorA >> 16) & 0xff;
+	cb = (colorB >> 16) & 0xff;
+	c  = (ca > cb) ? ca : cb;
+	color = (c << 16);
 	
-	ca = (colorA & 0x00ff00);
-	cb = (colorB & 0x00ff00);
-	g  = (ca > cb) ? ca : cb;
+	ca = (colorA >>  8) & 0xff;
+	cb = (colorB >>  8) & 0xff;
+	c  = (ca > cb) ? ca : cb;
+	color |= (c << 8);
 
-	ca = (colorA & 0x0000ff);
-	cb = (colorB & 0x0000ff);
-	b  = (ca > cb) ? ca : cb;
+	ca = (colorA      ) & 0xff;
+	cb = (colorB      ) & 0xff;
+	c  = (ca > cb) ? ca : cb;
+	color |= (c);
 	
-	color = (r | g | b);
+	return color;
+}
+
+static uint32_t CalcAddColor(uint32_t colorA, uint32_t colorB)
+{
+	uint32_t color;
+	uint32_t ca, cb;
+	uint32_t c;
+	
+	ca = (colorA >> 16) & 0xff;
+	cb = (colorB >> 16) & 0xff;
+	c  = ((ca + cb) < 0xff) ? (ca + cb) : 0xff;
+	color = (c << 16);
+	
+	ca = (colorA >>  8) & 0xff;
+	cb = (colorB >>  8) & 0xff;
+	c  = ((ca + cb) < 0xff) ? (ca + cb) : 0xff;
+	color |= (c << 8);
+
+	ca = (colorA      ) & 0xff;
+	cb = (colorB      ) & 0xff;
+	c  = ((ca + cb) < 0xff) ? (ca + cb) : 0xff;
+	color |= (c);
 	
 	return color;
 }
@@ -885,7 +1116,7 @@ uint32_t CalcMaxColor(uint32_t colorA, uint32_t colorB)
 //		colorB:
 //		alphaA: alpha value to apply to colorA (and 1-alpha to apply to color B)
 //----------------------------------------------------------------------------------------
-uint32_t CalcAlphaBlendColor(uint32_t colorA, uint32_t colorB, uint32_t alphaA)
+static uint32_t CalcAlphaBlendColor(uint32_t colorA, uint32_t colorB, uint32_t alphaA)
 {
 	uint32_t color;
 	uint32_t ca, cb;
@@ -912,13 +1143,13 @@ uint32_t CalcAlphaBlendColor(uint32_t colorA, uint32_t colorB, uint32_t alphaA)
 //========================================================================================
 //	Early routines
 //========================================================================================
-
+#if 0
 //----------------------------------------------------------------------------------------
 //	Full Colors
 //		Sets the colors of each side for a few seconds, blanks, 
 //		continues with the next color sequence
 //----------------------------------------------------------------------------------------
-void fullColorsTest(void)
+static void fullColorsTest(void)
 {
 	int bigDelay = 3000;
 	
@@ -945,7 +1176,7 @@ void fullColorsTest(void)
 //		colorsB: array with 6 colors
 //		delayTime: delay between each update
 //----------------------------------------------------------------------------------------
-void DualLoopSequence(uint32_t* colorsA, uint32_t* colorsB, uint32_t delayTime)
+static void DualLoopSequence(uint32_t* colorsA, uint32_t* colorsB, uint32_t delayTime)
 {
 	uint16_t ledCount = hexring.numPixels();
 	uint16_t spacing = ledCount/6;
@@ -976,7 +1207,7 @@ void DualLoopSequence(uint32_t* colorsA, uint32_t* colorsB, uint32_t delayTime)
 //		colors: array with 6 colors
 //		delayTime: delay between each update
 //----------------------------------------------------------------------------------------
-void loopSequence(uint32_t* colors, uint32_t delayTime)
+static void loopSequence(uint32_t* colors, uint32_t delayTime)
 {
 	uint16_t ledCount = hexring.numPixels();
 	uint16_t spacing = ledCount/6;
@@ -994,22 +1225,6 @@ void loopSequence(uint32_t* colors, uint32_t delayTime)
 
 }
 
+#endif
 
-//========================================================================================
-//	Adafruit code
-//========================================================================================
-
-//----------------------------------------------------------------------------------------
-//	chase
-//----------------------------------------------------------------------------------------
-static void chase(uint32_t c)
-{
-	for(uint16_t i = 0; i < hexring.numPixels() + 4; i++) 
-	{
-		hexring.setPixelColor(i  , c); // Draw new pixel
-		hexring.setPixelColor(i-4, 0); // Erase pixel a few steps back
-		hexring.show();
-		delay(50);
-	}
-}
 
